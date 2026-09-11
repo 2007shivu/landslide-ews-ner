@@ -1,0 +1,1049 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>NER Landslide Early Warning System</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f171b">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- =========================
+       TOP BAR
+  ========================== -->
+
+  <header class="topbar">
+
+    <div class="brand">
+
+      <span class="brand-mark">△</span>
+
+      <div class="brand-text">
+        <h1>Landslide Early Warning &amp; Risk Monitoring</h1>
+        <span class="brand-sub">
+          North Eastern Region · India
+        </span>
+      </div>
+
+    </div>
+
+
+    <div class="topbar-status">
+
+      <div class="status-item">
+        <span class="status-label">Stations</span>
+        <span class="status-value" id="stat-stations">—</span>
+      </div>
+
+
+      <div class="status-item status-alert">
+        <span class="status-label">Active alerts</span>
+        <span class="status-value" id="stat-alerts">—</span>
+      </div>
+
+
+      <div class="status-item">
+        <span class="status-label">Last sync</span>
+        <span class="status-value mono" id="stat-time">—</span>
+      </div>
+
+
+      <button
+        class="btn-simulate"
+        id="btn-whatif"
+        type="button"
+      >
+        What-if simulator
+      </button>
+
+
+      <!-- =========================
+           USER MENU
+      ========================== -->
+
+      <div class="user-menu">
+
+        <button
+          type="button"
+          id="user-menu-btn"
+          class="user-menu-btn"
+          aria-label="Open user settings"
+          aria-expanded="false"
+        >
+
+          <span class="user-menu-icon">👤</span>
+
+          <span
+            id="user-menu-name"
+            class="user-menu-name"
+          >
+            User
+          </span>
+
+          <span class="user-menu-arrow">▼</span>
+
+        </button>
+
+
+        <div
+          id="user-menu-dropdown"
+          class="user-menu-dropdown"
+          hidden
+        >
+
+          <div class="user-menu-header">
+
+            <strong>User Alert Settings</strong>
+
+            <span>
+              Receive landslide warnings for your location
+            </span>
+
+          </div>
+
+
+          <form id="user-settings-form">
+
+            <label for="user-name">
+              Your name
+            </label>
+
+            <input
+              type="text"
+              id="user-name"
+              name="user-name"
+              placeholder="Enter your name"
+              maxlength="60"
+              autocomplete="name"
+            >
+
+
+            <label for="user-location">
+              Alert location
+            </label>
+
+            <select
+              id="user-location"
+              name="user-location"
+              required
+            >
+
+              <option value="">
+                Select your location
+              </option>
+
+              <option value="east-khasi">
+                East Khasi Hills, Meghalaya
+              </option>
+
+              <option value="west-jaintia">
+                West Jaintia Hills, Meghalaya
+              </option>
+
+              <option value="ri-bhoi">
+                Ri-Bhoi, Meghalaya
+              </option>
+
+              <option value="aizawl">
+                Aizawl, Mizoram
+              </option>
+
+              <option value="lunglei">
+                Lunglei, Mizoram
+              </option>
+
+              <option value="kohima">
+                Kohima, Nagaland
+              </option>
+
+              <option value="dimapur">
+                Dimapur, Nagaland
+              </option>
+
+              <option value="gangtok">
+                Gangtok, Sikkim
+              </option>
+
+              <option value="east-sikkim">
+                East Sikkim
+              </option>
+
+              <option value="imphal">
+                Imphal, Manipur
+              </option>
+
+              <option value="senapati">
+                Senapati, Manipur
+              </option>
+
+              <option value="agartala">
+                Agartala, Tripura
+              </option>
+
+              <option value="west-tripura">
+                West Tripura
+              </option>
+
+              <option value="itanagar">
+                Itanagar, Arunachal Pradesh
+              </option>
+
+              <option value="tawang">
+                Tawang, Arunachal Pradesh
+              </option>
+
+              <option value="papum-pare">
+                Papum Pare, Arunachal Pradesh
+              </option>
+
+              <option value="kamrup">
+                Kamrup, Assam
+              </option>
+
+              <option value="guwahati">
+                Guwahati, Assam
+              </option>
+
+              <option value="dima-hasao">
+                Dima Hasao, Assam
+              </option>
+
+              <option value="karbi-anglong">
+                Karbi Anglong, Assam
+              </option>
+
+            </select>
+
+
+            <label class="notification-toggle">
+
+              <input
+                type="checkbox"
+                id="enable-notifications"
+                name="enable-notifications"
+              >
+
+              <span>
+                Enable landslide notifications
+              </span>
+
+            </label>
+
+
+            <button
+              type="submit"
+              class="user-save-btn"
+            >
+              Save Alert Settings
+            </button>
+
+          </form>
+
+
+          <div
+            id="user-settings-status"
+            class="user-settings-status"
+            aria-live="polite"
+          ></div>
+
+
+          <div
+            id="user-alert-status"
+            class="user-alert-status"
+          >
+
+            <span class="user-alert-status-dot"></span>
+
+            <span id="user-alert-status-text">
+              Alerts not configured
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <!-- =========================
+       ALERT STRIP
+  ========================== -->
+
+  <div
+    class="alert-strip"
+    id="alert-strip"
+    hidden
+  ></div>
+
+
+  <!-- =========================
+       MAIN DASHBOARD
+  ========================== -->
+
+  <main class="layout">
+
+
+    <!-- =========================
+         STATION LIST
+    ========================== -->
+
+    <aside
+      class="station-list"
+      aria-label="Monitoring stations ranked by risk"
+    >
+
+      <div class="panel-head">
+
+        <h2>Stations by risk</h2>
+
+        <span class="panel-hint">
+          Ranked, highest first
+        </span>
+
+      </div>
+
+      <ol id="station-list"></ol>
+
+    </aside>
+
+
+    <!-- =========================
+         MAP
+    ========================== -->
+
+    <section class="map-wrap">
+
+      <div id="map"></div>
+
+
+      <button
+        id="report-btn"
+        class="report-btn"
+        type="button"
+      >
+        📢 Report Landslide
+      </button>
+
+
+      <div class="legend">
+
+        <span class="legend-title">
+          Risk level
+        </span>
+
+        <span class="legend-item">
+          <i class="dot dot-low"></i>
+          Low
+        </span>
+
+        <span class="legend-item">
+          <i class="dot dot-moderate"></i>
+          Moderate
+        </span>
+
+        <span class="legend-item">
+          <i class="dot dot-high"></i>
+          High
+        </span>
+
+        <span class="legend-item">
+          <i class="dot dot-critical"></i>
+          Critical
+        </span>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         DETAIL PANEL
+    ========================== -->
+
+    <aside
+      class="detail-panel"
+      aria-label="Selected station detail"
+    >
+
+      <div
+        id="detail-empty"
+        class="detail-empty"
+      >
+
+        <p>
+          Select a station on the map or from the list to view
+          live sensor telemetry and its risk breakdown.
+        </p>
+
+      </div>
+
+
+      <div
+        id="detail-content"
+        class="detail-content"
+        hidden
+      >
+
+        <div class="detail-head">
+
+          <div>
+
+            <h2 id="d-name">—</h2>
+
+            <span
+              id="d-state"
+              class="detail-sub"
+            >
+              —
+            </span>
+
+          </div>
+
+          <span
+            id="d-badge"
+            class="risk-badge"
+          >
+            —
+          </span>
+
+        </div>
+
+
+        <!-- =========================
+             RISK GAUGE
+        ========================== -->
+
+        <div class="risk-gauge">
+
+          <svg
+            viewBox="0 0 120 66"
+            class="gauge-svg"
+          >
+
+            <path
+              d="M10,60 A50,50 0 0 1 110,60"
+              class="gauge-track"
+            />
+
+            <path
+              id="gauge-fill"
+              d="M10,60 A50,50 0 0 1 110,60"
+              class="gauge-fill"
+            />
+
+          </svg>
+
+
+          <div class="gauge-value">
+
+            <span id="d-score">
+              0
+            </span>
+
+            <span class="gauge-max">
+              /100
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- =========================
+             DRIVING FACTORS
+        ========================== -->
+
+        <div class="factors">
+
+          <h3>
+            Driving factors
+          </h3>
+
+          <ul id="d-factors"></ul>
+
+        </div>
+
+
+        <!-- =========================
+             LIVE READINGS
+        ========================== -->
+
+        <div
+          class="readings-grid"
+          id="d-readings"
+        ></div>
+
+
+        <!-- =========================
+             RAINFALL FORECAST
+        ========================== -->
+
+        <div
+          class="forecast-card"
+          id="rainfall-forecast"
+        >
+
+          <div class="forecast-header">
+
+            <div>
+
+              <h3>
+                🌧️ Rainfall Risk Forecast
+              </h3>
+
+              <span class="forecast-subtitle">
+                AI prediction based on forecast rainfall
+              </span>
+
+            </div>
+
+
+            <span
+              class="forecast-badge"
+              id="forecast-risk-badge"
+            >
+              —
+            </span>
+
+          </div>
+
+
+          <div class="forecast-values">
+
+
+            <div class="forecast-value">
+
+              <span>
+                Next 6 hours
+              </span>
+
+              <strong id="forecast-6h">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="forecast-value">
+
+              <span>
+                Next 12 hours
+              </span>
+
+              <strong id="forecast-12h">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="forecast-value">
+
+              <span>
+                Next 24 hours
+              </span>
+
+              <strong id="forecast-24h">
+                —
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="forecast-result">
+
+
+            <div>
+
+              <span>
+                AI forecast score
+              </span>
+
+              <strong id="forecast-score">
+                —
+              </strong>
+
+              <span>
+                /100
+              </span>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                Forecast soil moisture
+              </span>
+
+              <strong id="forecast-moisture">
+                —
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <p class="forecast-note">
+            Forecast uses live Open-Meteo weather data.
+          </p>
+
+        </div>
+
+
+        <!-- =========================
+             TREND CHART
+        ========================== -->
+
+        <div class="chart-block">
+
+          <h3>
+            24h rainfall &amp; soil moisture trend
+          </h3>
+
+
+          <div class="chart-current-values">
+
+
+            <div class="chart-value rainfall-value">
+
+              <span>
+                Rainfall
+              </span>
+
+              <strong id="current-rainfall">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="chart-value moisture-value">
+
+              <span>
+                Soil Moisture
+              </span>
+
+              <strong id="current-moisture">
+                —
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <canvas
+            id="trend-chart"
+            height="180"
+          ></canvas>
+
+        </div>
+
+      </div>
+
+    </aside>
+
+  </main>
+
+</div>
+
+
+<!-- =====================================================
+     WHAT-IF MODEL TEST MODAL
+====================================================== -->
+
+<div
+  class="modal"
+  id="whatif-modal"
+  hidden
+>
+
+  <div class="modal-card">
+
+
+    <div class="modal-head">
+
+      <h2>
+        What-if model test
+      </h2>
+
+      <button
+        type="button"
+        class="modal-close"
+        id="whatif-close"
+        aria-label="Close"
+      >
+        ✕
+      </button>
+
+    </div>
+
+
+    <p class="modal-sub">
+      Enter test values to check how the trained model responds.
+      This does not change the live sensor feed.
+    </p>
+
+
+    <form
+      id="whatif-form"
+      class="whatif-grid"
+    >
+
+
+      <label>
+        1h rainfall (mm)
+
+        <input
+          type="number"
+          name="rainfall_1h_mm"
+          value="10"
+          min="0"
+          max="200"
+          step="0.5"
+        >
+
+      </label>
+
+
+      <label>
+        24h rainfall (mm)
+
+        <input
+          type="number"
+          name="rainfall_24h_mm"
+          value="60"
+          min="0"
+          max="800"
+          step="1"
+        >
+
+      </label>
+
+
+      <label>
+        72h rainfall (mm)
+
+        <input
+          type="number"
+          name="rainfall_72h_mm"
+          value="120"
+          min="0"
+          max="1500"
+          step="1"
+        >
+
+      </label>
+
+
+      <label>
+        Soil moisture (%)
+
+        <input
+          type="number"
+          name="soil_moisture_pct"
+          value="45"
+          min="0"
+          max="100"
+          step="1"
+        >
+
+      </label>
+
+
+      <label>
+        Slope (deg)
+
+        <input
+          type="number"
+          name="slope_deg"
+          value="30"
+          min="0"
+          max="90"
+          step="1"
+        >
+
+      </label>
+
+
+      <label>
+        Soil type
+
+        <select name="soil_type">
+
+          <option value="0">
+            Rocky / well-drained
+          </option>
+
+          <option
+            value="1"
+            selected
+          >
+            Sandy loam
+          </option>
+
+          <option value="2">
+            Clayey / poor drainage
+          </option>
+
+        </select>
+
+      </label>
+
+
+      <label>
+        Vegetation cover (%)
+
+        <input
+          type="number"
+          name="vegetation_cover_pct"
+          value="50"
+          min="0"
+          max="100"
+          step="1"
+        >
+
+      </label>
+
+
+      <label>
+        Seismic activity
+
+        <input
+          type="number"
+          name="seismic_activity"
+          value="0.4"
+          min="0"
+          max="10"
+          step="0.1"
+        >
+
+      </label>
+
+
+      <label>
+        Elevation (m)
+
+        <input
+          type="number"
+          name="elevation_m"
+          value="1000"
+          min="0"
+          max="9000"
+          step="10"
+        >
+
+      </label>
+
+
+      <label>
+        Past landslides/yr
+
+        <input
+          type="number"
+          name="historical_landslide_freq"
+          value="4"
+          min="0"
+          max="50"
+          step="1"
+        >
+
+      </label>
+
+
+      <button
+        type="submit"
+        class="btn-run"
+      >
+        Run prediction
+      </button>
+
+    </form>
+
+
+    <div
+      id="whatif-result"
+      class="whatif-result"
+      hidden
+    ></div>
+
+  </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     CITIZEN REPORT MODAL
+====================================================== -->
+
+<div
+  id="report-modal"
+  class="modal"
+  hidden
+>
+
+  <div class="modal-content">
+
+
+    <button
+      id="report-close"
+      class="modal-close"
+      type="button"
+    >
+      ×
+    </button>
+
+
+    <h2>
+      📢 Report a Landslide
+    </h2>
+
+
+    <p>
+      Share an observation from your location.
+    </p>
+
+
+    <form id="report-form">
+
+
+      <button
+        type="button"
+        id="pick-location-btn"
+        class="pick-location-btn"
+      >
+        📍 Add Location
+      </button>
+
+
+      <p id="selected-location">
+        No location selected
+      </p>
+
+
+      <input
+        type="hidden"
+        id="report-latitude"
+      >
+
+      <input
+        type="hidden"
+        id="report-longitude"
+      >
+
+
+      <label for="report-name">
+        Name
+      </label>
+
+      <input
+        type="text"
+        id="report-name"
+        placeholder="Optional"
+      >
+
+
+      <label for="report-type">
+        Report Type
+      </label>
+
+      <select
+        id="report-type"
+        required
+      >
+
+        <option value="">
+          Select an option
+        </option>
+
+        <option value="Landslide">
+          Landslide
+        </option>
+
+        <option value="Road Blockage">
+          Road Blockage
+        </option>
+
+        <option value="Rockfall">
+          Rockfall
+        </option>
+
+        <option value="Ground Crack">
+          Ground Crack
+        </option>
+
+        <option value="Waterlogging">
+          Waterlogging
+        </option>
+
+      </select>
+
+
+      <label for="report-description">
+        Description
+      </label>
+
+      <textarea
+        id="report-description"
+        placeholder="Describe what you observed..."
+        maxlength="500"
+      ></textarea>
+
+
+      <button
+        type="submit"
+        class="submit-report-btn"
+      >
+        Submit Report
+      </button>
+
+    </form>
+
+
+    <p id="report-status"></p>
+
+  </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     JAVASCRIPT LIBRARIES
+====================================================== -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<script src="config.js"></script>
+
+<script src="script.js"></script>
+
+
+</body>
+</html>
+```
